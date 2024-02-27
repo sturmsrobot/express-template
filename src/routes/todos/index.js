@@ -50,7 +50,7 @@ TodosRouter.get("/byid", async (req, res) => {
 });
 
 // Alle Todos von einer UserId
-TodosRouter.get("/byuserid", (req, res) => {
+TodosRouter.get("/byuserid", async (req, res) => {
   // const userId = req.body.userId;
   // const userId = parseInt(req.query.userId);
   const userId = req.query.userId;
@@ -63,7 +63,7 @@ TodosRouter.get("/byuserid", (req, res) => {
     return;
   }
 
-  const userTodos = todos.filter((todo) => todo.userId == userId);
+  const userTodos = await TodoModel.findAll({ userId: userId });
 
   res.status(StatusCodes.OK).json(userTodos);
   // res.status(StatusCodes.OK).send(JSON.stringify(userTodos)); //alternativ
@@ -75,23 +75,32 @@ TodosRouter.get("/all", async (req, res) => {
 });
 
 // PUT REQUESTS
-TodosRouter.put("/mark", (req, res) => {
+TodosRouter.put("/mark", async (req, res) => {
   const { id, newIsDone } = req.body;
 
-  const todo = todos.find((item) => item.id == id);
+  try {
+    // Aktualisiere das Todo-Objekt in der Datenbank
+    const [numUpdatedRows, updatedTodo] = await TodoModel.update(
+      { isDone: newIsDone },
+      { where: { id: id }, returning: true }
+    );
 
-  // setzt das zuvor definierte todo auf den neuen isDone WErt
-  todo.isDone = newIsDone;
+    if (numUpdatedRows === 0) {
+      return res
+        .status(StatusCodes.NOT_FOUND)
+        .json({ error: "Todo nicht gefunden" });
+    }
 
-  // Todo rauslöschen
-  const newTodos = todos.filter((item) => item.id != id);
-
-  // Geupdatete Todo wieder hinzufügen
-  newTodos.push(todo);
-
-  todos = newTodos;
-
-  res.status(StatusCodes.OK).json({ updatedTodo: todo });
+    // res.status(StatusCodes.OK).json({ updatedTodo: updatedTodo[0] });
+    // res.status(StatusCodes.OK).json({ updatedTodo: updatedTodo[0].dataValues });
+    // res.status(StatusCodes.OK).json({ updatedTodo: updatedTodo[0].get({ plain: true }) });
+    res.status(StatusCodes.OK).json({ updatedTodo: updatedTodo[0].toJSON() });
+  } catch (error) {
+    console.error(error);
+    res
+      .status(StatusCodes.INTERNAL_SERVER_ERROR)
+      .json({ error: "Interner Serverfehler" });
+  }
 });
 
 TodosRouter.put("/update", async (req, res) => {
