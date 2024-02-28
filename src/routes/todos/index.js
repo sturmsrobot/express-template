@@ -94,7 +94,7 @@ TodosRouter.put("/mark", async (req, res) => {
     // res.status(StatusCodes.OK).json({ updatedTodo: updatedTodo[0] });
     // res.status(StatusCodes.OK).json({ updatedTodo: updatedTodo[0].dataValues });
     // res.status(StatusCodes.OK).json({ updatedTodo: updatedTodo[0].get({ plain: true }) });
-    res.status(StatusCodes.OK).json({ updatedTodo: updatedTodo[0].toJSON() });
+    res.status(StatusCodes.OK).json({ updatedTodo: updatedTodo });
   } catch (error) {
     console.error(error);
     res
